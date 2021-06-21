@@ -1,58 +1,99 @@
 var userClickedPattern = [];
 var gamePattern = [];
-var level = 0;
 var buttonColours = ['red', 'blue', 'green', 'yellow'];
-var randomNumber = null;
-var nextSequence = () => (Math.floor(Math.random() * 4));
-var randomChosenColour = buttonColours[nextSequence()];
-gamePattern.push(randomChosenColour);
+var level = 0;
+var gameStart = false;
 
-var userChosenColour = $('.btn').on('click', (event) => {
-  // console.log(event.target.id);
-  userClickedPattern.push(event.target.id);
-  // console.log(userClickedPattern);
-  console.log(event.target);
-  playSound(event.target.id);
-  // $(event.target).addClass('pressed');
-  animatePress();
+
+//  activates only once to start the game and resets ur clicks;
+$('body').on('keyup', () => {
+  if (!gameStart) {
+    setTimeout(nextSequence, 100);
+    gameStart = true;
+  }
+});
+
+// detectcts when you click YOUR INPUT VVVVVVVVVVVVVVVVV
+$('.btn').on('click', (event) => {
+  var userChosenColour = event.target.id;
+  userClickedPattern.push(userChosenColour);
+  animatePress(userChosenColour);
+  playSound(userChosenColour);
+  console.log(userClickedPattern, 'userclicked');
+  checkAnswer(userClickedPattern.length - 1);
 
 });
-//  function that starts the whole thing
-var randomColour = () => {
-  $(`#${randomChosenColour}`).fadeOut(100).fadeIn(100);
+
+// restarts the game
+var startOver = () => {
+  level = 0;
+  gamePattern = [];
+  gameStart = false;
+};
+
+
+// is SUPPOSED TO START NEXT LEVELS
+var nextSequence = () => {
+  userClickedPattern = [];
+  level += 1;
+  $('h1').text(`Level ${level}`);
+  console.log(userClickedPattern, 'userclicked');
+  var randomNumber = (Math.floor(Math.random() * 4));
+  var randomChosenColour = buttonColours[randomNumber];
+  gamePattern.push(randomChosenColour);
+  console.log(gamePattern, 'gamepattern');
   playSound(randomChosenColour);
+  //changing this
+  $(`#${randomChosenColour}`).fadeOut(100).fadeIn(100);
 };
 
 
-var animatePress = (currentColour = null) => {
-  if (currentColour === null) {
-    var thisTarget = event.target;
-    $(thisTarget).addClass('pressed');
-    setTimeout(() => { $(thisTarget).removeClass('pressed'); }, 100);
-  } else {
-    // ganna see if i can simplify this
-  }
-};
-
+// adds sound to the patterns
 var playSound = (name) => {
   var audio = new Audio(`sounds/${name}.mp3`);
   audio.play();
+
 };
 
+//animates your clicks
+var animatePress = (currentColour) => {
+  $(`#${currentColour}`).addClass('pressed');
+  setTimeout(() => {
+    $(`#${currentColour}`).removeClass('pressed');
+  }, 100);
+};
 
-//hardest part to fisure out for me
-$('body').on('keyup', function (event) {
-  $('h1').text(`level ${level}`);
-  randomColour();
-  level++;
-  console.log(window.gamePattern);
-  $('body').off('keyup');
-  // setTimeout($('h1').text(`level ${level}`), 3000);
-});
+// checks your input answer..
+var checkAnswer = (currentLevel) => {
+  if (userClickedPattern.length < gamePattern.length ) {
+    for (var i = 0; i < userClickedPattern.length; i++) {
+      if (userClickedPattern[i] !== gamePattern[i]) {
+        wrongSequence();
+        break;
+      }
+    }
+  }
+  if (userClickedPattern.length === gamePattern.length ) {
+    for (var i = 0; i < userClickedPattern.length; i++) {
+      var gameOver = false;
+      if (userClickedPattern[i] !== gamePattern [i]) {
+        wrongSequence();
+        break;
+      }
+    }
+    if (!gameOver) {
+      setTimeout(nextSequence, 800);
+    }
+  }
+};
 
-
-
-
-
-
-// $('body').off('keydown', randomColour);
+var wrongSequence = () => {
+  gameOver = true;
+  $('body').addClass('game-over');
+  $('h1').text('Game Over, Press Any Key to Restart');
+  setTimeout( () => {
+    $('body').removeClass('game-over');
+  }, 200);
+  playSound('wrong');
+  startOver();
+};
